@@ -1,0 +1,6 @@
+{
+  "name": "Notion Clone",
+  "description": "A Notion-like workspace application with a sidebar, pages, and block-based editing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
