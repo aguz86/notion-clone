@@ -3,6 +3,7 @@ import { Project, Task, TaskStatus, ProjectViewMode } from '../types';
 import { generateId } from '../utils';
 import { Plus, GripVertical, Trash2, Calendar as CalendarIcon, List, LayoutGrid, Clock, Wallet, CheckSquare, Search } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+const DraggableComponent = Draggable as any;
 import BulkDeleteModal from './BulkDeleteModal';
 
 interface ProjectViewProps {
@@ -272,7 +273,8 @@ export default function ProjectView({ project, onChange }: ProjectViewProps) {
                       
                       <div className="flex-1 flex flex-col gap-3 min-h-[200px]">
                         {project.tasks.filter(t => t.status === column).map((task, index) => (
-                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                          
+<DraggableComponent key={task.id} draggableId={task.id} index={index}>
                             {(provided, snapshot) => (
                               <div 
                                 ref={provided.innerRef}
@@ -321,7 +323,7 @@ export default function ProjectView({ project, onChange }: ProjectViewProps) {
                                 )}
                               </div>
                             )}
-                          </Draggable>
+                          </DraggableComponent>
                         ))}
                         {provided.placeholder}
 

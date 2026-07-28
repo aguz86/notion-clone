@@ -1,6 +1,8 @@
 import React from 'react';
-import { File, Plus, Settings, Search, LayoutDashboard, Target, Trash2, Moon, Sun, Download, Upload, CheckSquare, Calculator, Bookmark, Bell } from 'lucide-react';
+import { File, Plus, Settings, Search, LayoutDashboard, Target, Trash2, Moon, Sun, Download, Upload, CheckSquare, Calculator, Bookmark, Bell, Pin, GripVertical, CreditCard } from 'lucide-react';
 import { Page, Project, ViewType } from '../types';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+const DraggableComponent = Draggable as any;
 
 interface SidebarProps {
   pages: Page[];
@@ -20,11 +22,28 @@ interface SidebarProps {
   overdueCount?: number;
   onExport?: () => void;
   onImport?: () => void;
+  onReorderProjects?: (projects: Project[]) => void;
+  onToggleProjectPin?: (id: string) => void;
 }
 
 export default function Sidebar({ 
-  pages, projects, activeId, activeView, onSelect, onAddPage, onAddProject, onDeletePage, onDeleteProject, darkMode, onToggleDarkMode, onOpenSearch, canInstall, onInstall, overdueCount = 0, onExport, onImport
+  pages, projects, activeId, activeView, onSelect, onAddPage, onAddProject, onDeletePage, onDeleteProject, darkMode, onToggleDarkMode, onOpenSearch, canInstall, onInstall, overdueCount = 0, onExport, onImport, onReorderProjects, onToggleProjectPin
 }: SidebarProps) {
+  
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination || !onReorderProjects) return;
+    const items = Array.from(sortedProjects);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    onReorderProjects(items);
+  };
+
   return (
     <div className="w-64 bg-[#F7F7F5] dark:bg-gray-900 h-full flex flex-col border-r border-gray-200 dark:border-gray-800 text-[#37352f] dark:text-gray-200 overflow-hidden transition-colors">
       {/* Workspace header */}
@@ -38,7 +57,7 @@ export default function Sidebar({
       </div>
 
       {/* Main Navigation */}
-      <div className="px-2 py-2 mb-2">
+      <div className="px-2 py-2">
         <button 
           onClick={() => onSelect('dashboard', '')}
           className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
@@ -48,6 +67,7 @@ export default function Sidebar({
           <LayoutDashboard size={16} />
           <span>Dashboard</span>
         </button>
+        
         <button 
           onClick={onOpenSearch}
           className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-md mt-1 transition-colors"
@@ -56,6 +76,7 @@ export default function Sidebar({
           <span>Search</span>
           <span className="ml-auto text-[10px] uppercase border border-gray-300 dark:border-gray-600 rounded px-1">Ctrl K</span>
         </button>
+
         <button 
           onClick={() => onSelect('todolist', '')}
           className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md mt-1 transition-colors ${
@@ -65,6 +86,7 @@ export default function Sidebar({
           <CheckSquare size={16} />
           <span>To-do List</span>
         </button>
+
         <button 
           onClick={() => onSelect('calculator', '')}
           className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md mt-1 transition-colors ${
@@ -74,6 +96,7 @@ export default function Sidebar({
           <Calculator size={16} />
           <span>ROI Calculator</span>
         </button>
+        
         <button 
           onClick={() => onSelect('bookmarks', '')}
           className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md mt-1 transition-colors ${
@@ -82,6 +105,16 @@ export default function Sidebar({
         >
           <Bookmark size={16} />
           <span>Bookmark Link</span>
+        </button>
+
+        <button 
+          onClick={() => onSelect('bookmark-id', '')}
+          className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md mt-1 transition-colors ${
+            activeView === 'bookmark-id' ? 'bg-black/5 dark:bg-white/10 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'
+          }`}
+        >
+          <CreditCard size={16} />
+          <span>Bookmark ID</span>
         </button>
       </div>
 
@@ -94,32 +127,64 @@ export default function Sidebar({
               <Plus size={14} />
             </button>
           </div>
-          <div className="space-y-[1px]">
-            {projects.map((project) => (
-              <div 
-                key={project.id}
-                onClick={() => onSelect('project', project.id)}
-                className={`group flex items-center justify-between px-3 py-1.5 text-sm rounded-md cursor-pointer transition-colors ${
-                  activeView === 'project' && activeId === project.id ? 'bg-black/5 dark:bg-white/10 font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <span className="shrink-0">{project.icon || <Target size={16} />}</span>
-                  <span className="truncate">{project.title || 'Untitled Project'}</span>
+          
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="projects">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-[1px]">
+                  {sortedProjects.map((project, index) => (
+                    
+<DraggableComponent key={project.id} draggableId={project.id} index={index}>
+                      {(provided, snapshot) => (
+                        <div 
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          onClick={() => onSelect('project', project.id)}
+                          className={`group flex items-center justify-between px-3 py-1.5 text-sm rounded-md cursor-pointer transition-colors ${
+                            activeView === 'project' && activeId === project.id ? 'bg-black/5 dark:bg-white/10 font-medium' : 'hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                          } ${snapshot.isDragging ? 'shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 z-50' : ''}`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <div {...provided.dragHandleProps} className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing hover:bg-black/10 dark:hover:bg-white/10 rounded p-0.5 text-gray-400">
+                              <GripVertical size={14} />
+                            </div>
+                            <span className="shrink-0 text-gray-400">{project.icon || <Target size={16} />}</span>
+                            <span className="truncate">{project.title || 'Untitled Project'}</span>
+                          </div>
+                          
+                          <div className="flex items-center opacity-0 group-hover:opacity-100">
+                            {onToggleProjectPin && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleProjectPin(project.id);
+                                }}
+                                className={`p-1 rounded ${project.pinned ? 'text-purple-500' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
+                                title={project.pinned ? 'Unpin' : 'Pin'}
+                              >
+                                <Pin size={14} className={project.pinned ? 'fill-current' : ''} />
+                              </button>
+                            )}
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteProject(project.id);
+                              }}
+                              className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+                              title="Delete project"
+                            >
+                              <Trash2 size={14} className="text-gray-400 hover:text-red-500 transition-colors" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </DraggableComponent>
+                  ))}
+                  {provided.placeholder}
                 </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteProject(project.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
-                  title="Delete project"
-                >
-                  <Trash2 size={14} className="text-gray-400 hover:text-red-500 transition-colors" />
-                </button>
-              </div>
-            ))}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
 
         {/* Pages Section */}
@@ -143,6 +208,7 @@ export default function Sidebar({
                   <span className="shrink-0">{page.icon || <File size={16} />}</span>
                   <span className="truncate">{page.title || 'Untitled'}</span>
                 </div>
+                
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -170,6 +236,7 @@ export default function Sidebar({
             <span>Install App</span>
           </button>
         )}
+        
         <div className="flex gap-1 mb-1">
           {onExport && (
             <button 
@@ -190,6 +257,7 @@ export default function Sidebar({
             </button>
           )}
         </div>
+        
         <div className="flex gap-1">
           <button 
             onClick={() => onSelect('notifications', '')}
@@ -201,6 +269,7 @@ export default function Sidebar({
               <span className="absolute top-1.5 right-1/4 w-2 h-2 bg-red-500 rounded-full"></span>
             )}
           </button>
+          
           <button 
             onClick={onToggleDarkMode}
             className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors"
@@ -213,4 +282,3 @@ export default function Sidebar({
     </div>
   );
 }
-

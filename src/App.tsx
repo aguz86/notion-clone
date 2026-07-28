@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Page, Project, ViewType, TaskStatus, Bookmark } from './types';
+import { Page, Project, ViewType, TaskStatus, Bookmark, BookmarkId } from './types';
 import Sidebar from './components/Sidebar';
 import Editor from './components/Editor';
 import ProjectDashboard from './components/ProjectDashboard';
@@ -12,6 +12,7 @@ import ProjectView from './components/ProjectView';
 import TodoList from './components/TodoList';
 import ROICalculator from './components/ROICalculator';
 import BookmarkList from './components/BookmarkList';
+import BookmarkIdList from './components/BookmarkIdList';
 import NotificationList from './components/NotificationList';
 import AddProjectModal from './components/AddProjectModal';
 import Login from './components/Login';
@@ -74,6 +75,11 @@ export default function App() {
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => {
     const saved = localStorage.getItem('notion_clone_bookmarks');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [bookmarkIds, setBookmarkIds] = useState<BookmarkId[]>(() => {
+    const saved = localStorage.getItem('notion_clone_bookmark_ids');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -160,6 +166,7 @@ export default function App() {
     localStorage.setItem('notion_clone_projects', JSON.stringify(projects));
     localStorage.setItem('notion_clone_personal_tasks', JSON.stringify(personalTasks));
     localStorage.setItem('notion_clone_bookmarks', JSON.stringify(bookmarks));
+    localStorage.setItem('notion_clone_bookmark_ids', JSON.stringify(bookmarkIds));
 
     if (!isLoggedIn || !supabase) return;
 
@@ -285,6 +292,10 @@ export default function App() {
     }
   };
 
+  const toggleProjectPin = (id: string) => {
+    setProjects(projects.map(p => p.id === id ? { ...p, pinned: !p.pinned } : p));
+  };
+
   const handleExport = () => {
     const data = {
       pages,
@@ -365,6 +376,10 @@ export default function App() {
 
     if (activeView === 'bookmarks') {
       return <BookmarkList bookmarks={bookmarks} onChange={setBookmarks} />;
+    }
+
+    if (activeView === 'bookmark-id') {
+      return <BookmarkIdList bookmarks={bookmarkIds} onChange={setBookmarkIds} />;
     }
 
     if (activeView === 'notifications') {
@@ -499,6 +514,8 @@ export default function App() {
           onAddProject={handleAddProject}
           onDeletePage={handleDeletePage}
           onDeleteProject={handleDeleteProject}
+          onReorderProjects={setProjects}
+          onToggleProjectPin={toggleProjectPin}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode(!darkMode)}
           onOpenSearch={() => setSearchOpen(true)}

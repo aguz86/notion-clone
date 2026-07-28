@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PersonalTask } from '../types';
-import { CheckSquare, Square, Trash2, Plus, Calendar } from 'lucide-react';
+import { CheckSquare, Square, Trash2, Plus, Calendar, Pin } from 'lucide-react';
 import { generateId } from '../utils';
 import BulkDeleteModal from './BulkDeleteModal';
 
@@ -43,6 +43,10 @@ export default function TodoList({ tasks, onChange }: TodoListProps) {
     onChange(tasks.map(t => t.id === id ? { ...t, dueDate } : t));
   };
 
+  const togglePin = (id: string) => {
+    onChange(tasks.map(t => t.id === id ? { ...t, pinned: !t.pinned } : t));
+  };
+
   const deleteTask = (id: string) => {
     onChange(tasks.filter(t => t.id !== id));
   };
@@ -65,6 +69,8 @@ export default function TodoList({ tasks, onChange }: TodoListProps) {
   };
 
   const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
     if (a.completed === b.completed) return 0;
     return a.completed ? 1 : -1;
   });
@@ -180,8 +186,8 @@ export default function TodoList({ tasks, onChange }: TodoListProps) {
               }`}
             />
 
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="relative flex items-center bg-gray-100 dark:bg-gray-800 rounded px-2 py-1">
+            <div className="flex items-center gap-2 transition-opacity">
+              <div className="relative flex items-center bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 opacity-0 group-hover:opacity-100">
                 <Calendar size={14} className="text-gray-500 mr-2" />
                 <input
                   type="datetime-local"
@@ -192,8 +198,16 @@ export default function TodoList({ tasks, onChange }: TodoListProps) {
               </div>
               
               <button
+                onClick={() => togglePin(task.id)}
+                className={`p-1.5 rounded transition-colors ${task.pinned ? 'text-purple-500 opacity-100' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
+                title={task.pinned ? 'Unpin task' : 'Pin task'}
+              >
+                <Pin size={16} className={task.pinned ? 'fill-current' : ''} />
+              </button>
+
+              <button
                 onClick={() => deleteTask(task.id)}
-                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors opacity-0 group-hover:opacity-100"
                 title="Delete task"
               >
                 <Trash2 size={16} />

@@ -57,6 +57,7 @@ export interface Project {
   budgetSpent?: number;
   totalEstimatedHours?: number;
   estimatedHoursPerDay?: number;
+  pinned?: boolean;
 }
 
 export interface Folder {
@@ -69,6 +70,7 @@ export interface PersonalTask {
   title: string;
   completed: boolean;
   dueDate?: string;
+  pinned?: boolean;
 }
 
 export interface Bookmark {
@@ -76,8 +78,17 @@ export interface Bookmark {
   title: string;
   url: string;
   category: string;
+  pinned?: boolean;
 }
 
-export type ViewType = 'dashboard' | 'project' | 'page' | 'todolist' | 'calculator' | 'bookmarks' | 'notifications';
+export interface BookmarkId {
+  id: string;
+  title: string;
+  value: string;
+  category: string;
+  pinned?: boolean;
+}
+
+export type ViewType = 'dashboard' | 'project' | 'page' | 'todolist' | 'calculator' | 'bookmarks' | 'bookmark-id' | 'notifications';
 export type ProjectViewMode = 'kanban' | 'list' | 'calendar';
 
