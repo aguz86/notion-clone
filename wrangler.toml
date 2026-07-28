@@ -4,8 +4,3 @@ main = "worker.js"
 
 [assets]
 directory = "dist"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "workspace-db"
-database_id = "YOUR_DATABASE_ID_HERE"
