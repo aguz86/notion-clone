@@ -590,12 +590,20 @@ export default function App() {
                 <span>Klik ikon install (layar dengan tanda panah ke bawah) di ujung kanan address bar browser Anda.</span>
               </li>
             </ul>
-            <button 
-              onClick={() => setShowInstallModal(false)}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-            >
-              Mengerti
-            </button>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => window.open(window.location.href, '_blank')}
+                className="w-full py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-colors"
+              >
+                Buka di Tab Baru (Disarankan)
+              </button>
+              <button 
+                onClick={() => setShowInstallModal(false)}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Mengerti
+              </button>
+            </div>
           </div>
         </div>
       )}
