@@ -112,14 +112,31 @@ export default function App() {
   }, []);
 
   const handleInstallApp = async () => {
+    let inIframe = false;
+    try {
+      inIframe = window.self !== window.top;
+    } catch (e) {
+      inIframe = true;
+    }
+    
+    if (inIframe) {
+      setShowInstallModal(true);
+      return;
+    }
+
     if (!installPrompt) {
       setShowInstallModal(true);
       return;
     }
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setInstallPrompt(null);
+    
+    try {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallPrompt(null);
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -572,36 +589,69 @@ export default function App() {
       {showInstallModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-sm w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Cara Install Aplikasi</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Instalasi PWA</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Untuk menginstal aplikasi ini ke layar utama Anda:
+              {(() => {
+                try {
+                  if (window.self !== window.top) {
+                    return "Aplikasi saat ini berjalan di dalam mode preview (iFrame). Fitur instalasi PWA otomatis diblokir oleh browser di mode ini. Silakan buka aplikasi di tab baru terlebih dahulu.";
+                  }
+                } catch (e) {}
+                return "Browser Anda mungkin tidak mendukung instalasi otomatis (seperti iOS Safari) atau aplikasi sudah terinstal. Untuk menginstal aplikasi ini ke layar utama Anda secara manual:";
+              })()}
             </p>
-            <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-3 mb-6">
-              <li className="flex items-start gap-2">
-                <span className="font-bold">iOS (Safari):</span> 
-                <span>Ketuk ikon <b>Share</b> di menu bawah, lalu pilih <b>"Add to Home Screen"</b>.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">Android (Chrome):</span> 
-                <span>Ketuk menu titik tiga di kanan atas, lalu pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold">Desktop:</span> 
-                <span>Klik ikon install (layar dengan tanda panah ke bawah) di ujung kanan address bar browser Anda.</span>
-              </li>
-            </ul>
+            {(() => {
+              let inIframe = false;
+              try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+              if (!inIframe) {
+                return (
+                  <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-3 mb-6">
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold">iOS (Safari):</span> 
+                      <span>Ketuk ikon <b>Share</b> di menu bawah, lalu pilih <b>"Add to Home Screen"</b>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold">Android (Chrome):</span> 
+                      <span>Ketuk menu titik tiga di kanan atas, lalu pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold">Desktop:</span> 
+                      <span>Klik ikon install (layar dengan tanda panah ke bawah) di ujung kanan address bar browser Anda.</span>
+                    </li>
+                  </ul>
+                );
+              }
+              return null;
+            })()}
             <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => window.open(window.location.href, '_blank')}
-                className="w-full py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-colors"
-              >
-                Buka di Tab Baru (Disarankan)
-              </button>
+              {(() => {
+                let inIframe = false;
+                try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+                if (inIframe) {
+                  return (
+                    <button 
+                      onClick={() => window.open(window.location.href, '_blank')}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    >
+                      Buka di Tab Baru
+                    </button>
+                  );
+                }
+                return null;
+              })()}
               <button 
                 onClick={() => setShowInstallModal(false)}
-                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                className={`w-full py-2 font-medium rounded-lg transition-colors ${
+                  (() => {
+                    let inIframe = false;
+                    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+                    return inIframe 
+                      ? "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200" 
+                      : "bg-blue-600 hover:bg-blue-700 text-white";
+                  })()
+                }`}
               >
-                Mengerti
+                Tutup
               </button>
             </div>
           </div>
