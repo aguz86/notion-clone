@@ -1,4 +1,6 @@
-import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
+
+const config = `import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
@@ -32,11 +34,6 @@ export default defineConfig(() => {
           scope: '/',
           icons: [
             {
-              src: '/favicon.ico',
-              sizes: '64x64 32x32 24x24 16x16',
-              type: 'image/x-icon'
-            },
-            {
               src: '/icon-192x192.png',
               sizes: '192x192',
               type: 'image/png',
@@ -68,4 +65,6 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };
-});
+});`;
+
+fs.writeFileSync('vite.config.ts', config);

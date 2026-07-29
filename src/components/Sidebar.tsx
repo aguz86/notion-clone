@@ -232,7 +232,7 @@ export default function Sidebar({
           className="w-full flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md transition-colors mb-1"
         >
           <Download size={16} />
-          <span>Download PWA</span>
+          <span>Install PWA</span>
         </button>
         
         <div className="flex gap-1 mb-1">
