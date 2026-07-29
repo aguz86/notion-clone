@@ -18,6 +18,7 @@ import AddProjectModal from './components/AddProjectModal';
 import Login from './components/Login';
 import { generateId } from './utils';
 import { Search as SearchIcon, X, Bell } from 'lucide-react';
+import { deferredPrompt } from './main';
 import { supabase } from './supabase';
 
 const INITIAL_PAGES: Page[] = [
@@ -103,6 +104,15 @@ export default function App() {
   }, [isLoggedIn]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('install') === '1') {
+      setShowInstallModal(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
+  useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -120,23 +130,26 @@ export default function App() {
     }
     
     if (inIframe) {
-      setShowInstallModal(true);
+      window.open(window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'install=1', '_blank');
       return;
     }
 
-    if (!installPrompt) {
+    const activePrompt = installPrompt || deferredPrompt;
+
+    if (!activePrompt) {
       setShowInstallModal(true);
       return;
     }
     
     try {
-      await installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
+      await activePrompt.prompt();
+      const { outcome } = await activePrompt.userChoice;
       if (outcome === 'accepted') {
         setInstallPrompt(null);
       }
     } catch (e) {
       console.error(e);
+      setShowInstallModal(true);
     }
   };
 
@@ -590,21 +603,74 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-sm w-full p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Instalasi PWA</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              {(() => {
-                try {
-                  if (window.self !== window.top) {
-                    return "Aplikasi saat ini berjalan di dalam mode preview (iFrame). Fitur instalasi PWA otomatis diblokir oleh browser di mode ini. Silakan buka aplikasi di tab baru terlebih dahulu.";
-                  }
-                } catch (e) {}
-                return "Browser Anda mungkin tidak mendukung instalasi otomatis (seperti iOS Safari) atau aplikasi sudah terinstal. Untuk menginstal aplikasi ini ke layar utama Anda secara manual:";
-              })()}
-            </p>
             {(() => {
+              const activePrompt = installPrompt || deferredPrompt;
+              
+              if (activePrompt) {
+                return (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                      Aplikasi siap diinstal. Klik tombol di bawah ini untuk memulai instalasi.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await activePrompt.prompt();
+                            const { outcome } = await activePrompt.userChoice;
+                            if (outcome === 'accepted') {
+                              setInstallPrompt(null);
+                              setShowInstallModal(false);
+                            }
+                          } catch(e) {}
+                        }}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-md"
+                      >
+                        Install Sekarang
+                      </button>
+                      <button 
+                        onClick={() => setShowInstallModal(false)}
+                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </>
+                );
+              }
+              
               let inIframe = false;
               try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
-              if (!inIframe) {
+              
+              if (inIframe) {
                 return (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                      Aplikasi saat ini berjalan di dalam mode preview (iFrame). Fitur instalasi PWA otomatis diblokir oleh browser di mode ini.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        onClick={() => window.open(window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'install=1', '_blank')}
+                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                      >
+                        Buka di Tab Baru & Install
+                      </button>
+                      <button 
+                        onClick={() => setShowInstallModal(false)}
+                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </>
+                );
+              }
+
+              return (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Browser Anda mungkin tidak mendukung instalasi otomatis (seperti iOS Safari) atau aplikasi sudah terinstal. Untuk menginstal secara manual:
+                  </p>
                   <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-3 mb-6">
                     <li className="flex items-start gap-2">
                       <span className="font-bold">iOS (Safari):</span> 
@@ -616,44 +682,20 @@ export default function App() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="font-bold">Desktop:</span> 
-                      <span>Klik ikon install (layar dengan tanda panah ke bawah) di ujung kanan address bar browser Anda.</span>
+                      <span>Klik ikon install di ujung kanan address bar browser.</span>
                     </li>
                   </ul>
-                );
-              }
-              return null;
-            })()}
-            <div className="flex flex-col gap-2">
-              {(() => {
-                let inIframe = false;
-                try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
-                if (inIframe) {
-                  return (
+                  <div className="flex flex-col gap-2">
                     <button 
-                      onClick={() => window.open(window.location.href, '_blank')}
+                      onClick={() => setShowInstallModal(false)}
                       className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      Buka di Tab Baru
+                      Tutup
                     </button>
-                  );
-                }
-                return null;
-              })()}
-              <button 
-                onClick={() => setShowInstallModal(false)}
-                className={`w-full py-2 font-medium rounded-lg transition-colors ${
-                  (() => {
-                    let inIframe = false;
-                    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
-                    return inIframe 
-                      ? "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200" 
-                      : "bg-blue-600 hover:bg-blue-700 text-white";
-                  })()
-                }`}
-              >
-                Tutup
-              </button>
-            </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
