@@ -98,6 +98,7 @@ export default function App() {
   // PWA Install Prompt
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [isCheckingInstall, setIsCheckingInstall] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('isLoggedIn', String(isLoggedIn));
@@ -106,6 +107,8 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('install') === '1') {
+      setIsCheckingInstall(true);
+      setTimeout(() => setIsCheckingInstall(false), 3000);
       setShowInstallModal(true);
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
@@ -118,7 +121,16 @@ export default function App() {
       setInstallPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const timer = setInterval(() => {
+      if (deferredPrompt && !installPrompt) {
+        setInstallPrompt(deferredPrompt);
+      }
+    }, 500);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      clearInterval(timer);
+    };
+    
   }, []);
 
   const handleInstallApp = async () => {
@@ -605,6 +617,15 @@ export default function App() {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Instalasi PWA</h3>
             {(() => {
               const activePrompt = installPrompt || deferredPrompt;
+              
+              if (isCheckingInstall && !activePrompt && !inIframe) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Menyiapkan instalasi...</p>
+                  </div>
+                );
+              }
               
               if (activePrompt) {
                 return (
