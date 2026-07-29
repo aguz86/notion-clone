@@ -96,6 +96,7 @@ export default function App() {
   
   // PWA Install Prompt
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('isLoggedIn', String(isLoggedIn));
@@ -111,7 +112,10 @@ export default function App() {
   }, []);
 
   const handleInstallApp = async () => {
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      setShowInstallModal(true);
+      return;
+    }
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -564,6 +568,37 @@ export default function App() {
 
         {renderContent()}
       </div>
+      
+      {showInstallModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Cara Install Aplikasi</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Untuk menginstal aplikasi ini ke layar utama Anda:
+            </p>
+            <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-3 mb-6">
+              <li className="flex items-start gap-2">
+                <span className="font-bold">iOS (Safari):</span> 
+                <span>Ketuk ikon <b>Share</b> di menu bawah, lalu pilih <b>"Add to Home Screen"</b>.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">Android (Chrome):</span> 
+                <span>Ketuk menu titik tiga di kanan atas, lalu pilih <b>"Install app"</b> atau <b>"Add to Home screen"</b>.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">Desktop:</span> 
+                <span>Klik ikon install (layar dengan tanda panah ke bawah) di ujung kanan address bar browser Anda.</span>
+              </li>
+            </ul>
+            <button 
+              onClick={() => setShowInstallModal(false)}
+              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

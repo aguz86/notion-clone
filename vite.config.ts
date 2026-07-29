@@ -15,6 +15,9 @@ export default defineConfig(() => {
           name: 'Workspace Tracker',
           short_name: 'Workspace',
           theme_color: '#ffffff',
+          background_color: '#ffffff',
+          display: 'standalone',
+          start_url: '/',
           icons: [
             {
               src: '/icon-192x192.png',
