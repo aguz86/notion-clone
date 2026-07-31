@@ -117,7 +117,7 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e: any) => {
-      e.preventDefault();
+      
       setInstallPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
@@ -252,7 +252,7 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
+        
         setSearchOpen(true);
       }
     };

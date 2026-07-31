@@ -1,7 +1,5 @@
-
 export let deferredPrompt: any = null;
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
   deferredPrompt = e;
 });
 import {StrictMode} from 'react';
