@@ -99,6 +99,7 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isCheckingInstall, setIsCheckingInstall] = useState(false);
+  const [autoPromptShown, setAutoPromptShown] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('isLoggedIn', String(isLoggedIn));
@@ -124,6 +125,16 @@ export default function App() {
     const timer = setInterval(() => {
       if (deferredPrompt) {
         setInstallPrompt((prev: any) => prev || deferredPrompt);
+        
+        let inIframe = false;
+        try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+        
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile && !inIframe && !localStorage.getItem('pwa_prompt_dismissed') && !autoPromptShown) {
+          setShowInstallModal(true);
+          setAutoPromptShown(true);
+        }
       }
     }, 500);
     return () => {
@@ -650,7 +661,10 @@ export default function App() {
                         Install Sekarang
                       </button>
                       <button 
-                        onClick={() => setShowInstallModal(false)}
+                        onClick={() => {
+                          setShowInstallModal(false);
+                          localStorage.setItem('pwa_prompt_dismissed', '1');
+                        }}
                         className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
                       >
                         Tutup
@@ -677,7 +691,10 @@ export default function App() {
                         Buka di Tab Baru & Install
                       </button>
                       <button 
-                        onClick={() => setShowInstallModal(false)}
+                        onClick={() => {
+                          setShowInstallModal(false);
+                          localStorage.setItem('pwa_prompt_dismissed', '1');
+                        }}
                         className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
                       >
                         Tutup
@@ -708,7 +725,10 @@ export default function App() {
                   </ul>
                   <div className="flex flex-col gap-2">
                     <button 
-                      onClick={() => setShowInstallModal(false)}
+                      onClick={() => {
+                        setShowInstallModal(false);
+                        localStorage.setItem('pwa_prompt_dismissed', '1');
+                      }}
                       className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                     >
                       Tutup

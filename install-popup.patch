@@ -1,0 +1,39 @@
+--- src/App.tsx
++++ src/App.tsx
+@@ -100,6 +100,7 @@
+   const [showInstallModal, setShowInstallModal] = useState(false);
+   const [isCheckingInstall, setIsCheckingInstall] = useState(false);
++  const [autoPromptShown, setAutoPromptShown] = useState(false);
+ 
+   useEffect(() => {
+@@ -124,6 +125,10 @@
+     const timer = setInterval(() => {
+       if (deferredPrompt) {
+         setInstallPrompt((prev: any) => prev || deferredPrompt);
++        if (!localStorage.getItem('pwa_prompt_dismissed') && !autoPromptShown) {
++          setShowInstallModal(true);
++          setAutoPromptShown(true);
++        }
+       }
+     }, 500);
+     return () => {
+@@ -650,7 +655,10 @@
+                       </button>
+                       <button 
+-                        onClick={() => setShowInstallModal(false)}
++                        onClick={() => {
++                          setShowInstallModal(false);
++                          localStorage.setItem('pwa_prompt_dismissed', '1');
++                        }}
+                         className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                       >
+@@ -677,7 +685,10 @@
+                       </button>
+                       <button 
+-                        onClick={() => setShowInstallModal(false)}
++                        onClick={() => {
++                          setShowInstallModal(false);
++                          localStorage.setItem('pwa_prompt_dismissed', '1');
++                        }}
+                         className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                       >
