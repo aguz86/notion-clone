@@ -18,7 +18,6 @@ import AddProjectModal from './components/AddProjectModal';
 import Login from './components/Login';
 import { generateId } from './utils';
 import { Search as SearchIcon, X, Bell } from 'lucide-react';
-import { deferredPrompt } from './main';
 import { supabase } from './supabase';
 
 const INITIAL_PAGES: Page[] = [
@@ -118,31 +117,48 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e: any) => {
-      
+      e.preventDefault();
       setInstallPrompt(e);
+      (window as any).deferredPrompt = e;
     };
     window.addEventListener('beforeinstallprompt', handler);
+    
+    // Check if standalone
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
     const timer = setInterval(() => {
-      if (deferredPrompt) {
-        setInstallPrompt((prev: any) => prev || deferredPrompt);
-        
-        let inIframe = false;
-        try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
-        
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile && !inIframe && !localStorage.getItem('pwa_prompt_dismissed') && !autoPromptShown) {
+      const activePrompt = installPrompt || (window as any).deferredPrompt;
+      if (activePrompt) {
+        setInstallPrompt(activePrompt);
+      }
+      
+      // Auto prompt on mobile if not standalone and not in iframe
+      if (isMobile && !isStandalone && !inIframe && !localStorage.getItem('pwa_prompt_dismissed') && !autoPromptShown) {
+        // Show if we have the prompt, OR if it's iOS (since iOS doesn't get the prompt event)
+        if (activePrompt || isIOS) {
           setShowInstallModal(true);
           setAutoPromptShown(true);
         }
       }
-    }, 500);
+    }, 1000);
+
+    const installHandler = () => {
+      setShowInstallModal(false);
+      setInstallPrompt(null);
+      (window as any).deferredPrompt = null;
+    };
+    window.addEventListener('appinstalled', installHandler);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installHandler);
       clearInterval(timer);
     };
-    
-  }, []);
+  }, [installPrompt, autoPromptShown]);
 
   const handleInstallApp = async () => {
     let inIframe = false;
@@ -157,7 +173,7 @@ export default function App() {
       return;
     }
 
-    const activePrompt = installPrompt || deferredPrompt;
+    const activePrompt = installPrompt || (window as any).deferredPrompt;
 
     if (!activePrompt) {
       setShowInstallModal(true);
@@ -627,7 +643,7 @@ export default function App() {
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-sm w-full p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Instalasi PWA</h3>
             {(() => {
-              const activePrompt = installPrompt || deferredPrompt;
+              const activePrompt = installPrompt || (window as any).deferredPrompt;
               
               if (isCheckingInstall && !activePrompt && !inIframe) {
                 return (
