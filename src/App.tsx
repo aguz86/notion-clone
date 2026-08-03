@@ -122,8 +122,8 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handler);
     const timer = setInterval(() => {
-      if (deferredPrompt && !installPrompt) {
-        setInstallPrompt(deferredPrompt);
+      if (deferredPrompt) {
+        setInstallPrompt((prev: any) => prev || deferredPrompt);
       }
     }, 500);
     return () => {
